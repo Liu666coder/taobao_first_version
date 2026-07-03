@@ -7,7 +7,7 @@
 
     <div v-if="cartStore.cartList.length === 0" class="empty-cart">
       <el-empty description="购物车空空如也">
-        <el-button type="primary" @click="$router.push('/')">去逛逛</el-button>
+        <el-button type="primary" @click="$router.push('/store')">去逛逛</el-button>
       </el-empty>
     </div>
 

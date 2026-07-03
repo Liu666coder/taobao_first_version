@@ -29,7 +29,7 @@
     <!-- 主导航栏 -->
     <header class="header">
       <div class="container header-inner">
-        <div class="logo" @click="$router.push('/')">
+        <div class="logo" @click="$router.push('/store')">
           <span class="logo-icon">🛒</span>
           <span class="logo-text">校园淘宝</span>
         </div>
@@ -194,12 +194,12 @@ provide('currentCategory', currentCategory)
 provide('categories', categories)
 
 const handleSearch = () => {
-  router.push({ path: '/', query: { keyword: keyword.value, categoryId: currentCategory.value } })
+  router.push({ path: '/store', query: { keyword: keyword.value, categoryId: currentCategory.value } })
 }
 
 const filterByCategory = (categoryId) => {
   currentCategory.value = categoryId
-  router.push({ path: '/', query: { keyword: keyword.value, categoryId } })
+  router.push({ path: '/store', query: { keyword: keyword.value, categoryId } })
 }
 
 const handleCommand = (command) => {
@@ -211,7 +211,7 @@ const handleCommand = (command) => {
     userStore.logout()
     cartStore.cartCount = 0
     // 强制刷新页面
-    window.location.href = '/'
+    window.location.href = '/store'
   }
 }
 

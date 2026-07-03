@@ -33,7 +33,7 @@
       </el-form>
 
       <div class="login-footer">
-        <router-link to="/">返回前台</router-link>
+        <router-link to="/store">返回前台</router-link>
       </div>
     </div>
   </div>

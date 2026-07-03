@@ -1,9 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
-  // 前台路由
+  // 进场页面
   {
     path: '/',
+    name: 'Landing',
+    component: () => import('@/views/front/LandingPage.vue'),
+    meta: { title: '校园淘宝商城' }
+  },
+  // 前台路由
+  {
+    path: '/store',
     component: () => import('@/views/front/Layout.vue'),
     children: [
       {

@@ -3,7 +3,7 @@
     <div class="login-header">
       <div class="container">
         <div class="header-inner">
-          <div class="logo" @click="$router.push('/')">
+          <div class="logo" @click="$router.push('/store')">
             <span class="logo-text">校园淘宝</span>
           </div>
           <h1>用户登录</h1>
@@ -209,7 +209,7 @@ const handleLogin = async () => {
       localStorage.setItem('token', res.data)
       ElMessage.success('登录成功')
       // 跳转到首页，加时间戳防止浏览器缓存
-      window.location.href = '/?_t=' + Date.now()
+      window.location.href = '/store?_t=' + Date.now()
     } else {
       ElMessage.error(res.message)
     }
@@ -238,7 +238,7 @@ const handlePhoneLogin = async () => {
       localStorage.removeItem('adminToken')
       localStorage.setItem('token', res.data)
       ElMessage.success('登录成功')
-      window.location.href = '/?_t=' + Date.now()
+      window.location.href = '/store?_t=' + Date.now()
     } else {
       ElMessage.error(res.message)
     }

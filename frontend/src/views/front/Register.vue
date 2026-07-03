@@ -3,7 +3,7 @@
     <div class="login-header">
       <div class="container">
         <div class="header-inner">
-          <div class="logo" @click="$router.push('/')">
+          <div class="logo" @click="$router.push('/store')">
             <span class="logo-text">校园淘宝</span>
           </div>
           <h1>用户注册</h1>

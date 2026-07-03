@@ -110,7 +110,7 @@ const goDetail = (id) => {
 
 const filterByCategory = (categoryId) => {
   currentCategory.value = categoryId
-  router.push({ path: '/', query: { categoryId } })
+  router.push({ path: '/store', query: { categoryId } })
 }
 
 onMounted(fetchProducts)

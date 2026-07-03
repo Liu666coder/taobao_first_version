@@ -40,7 +40,7 @@
 
       <div v-else-if="filteredOrders.length === 0" class="empty">
         <el-empty description="暂无订单">
-          <el-button type="primary" @click="$router.push('/')">去购物</el-button>
+          <el-button type="primary" @click="$router.push('/store')">去购物</el-button>
         </el-empty>
       </div>
 
