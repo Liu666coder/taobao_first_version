@@ -68,9 +68,6 @@ public interface ProductMapper {
     @Delete("DELETE FROM product WHERE id=#{id}")
     int deleteById(@Param("id") Long id);
 
-    @Select("SELECT COUNT(*) FROM product")
-    int count();
-
     @Select("SELECT COUNT(*) FROM product WHERE category_id = #{categoryId}")
     int countByCategoryId(@Param("categoryId") Long categoryId);
 }

@@ -34,7 +34,4 @@ public interface CategoryMapper {
 
     @Delete("DELETE FROM category WHERE id=#{id}")
     int deleteById(@Param("id") Long id);
-
-    @Select("SELECT COUNT(*) FROM category")
-    int count();
 }

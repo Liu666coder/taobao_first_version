@@ -50,7 +50,4 @@ public interface UserMapper {
 
     @Delete("DELETE FROM user WHERE id=#{id}")
     int deleteById(@Param("id") Long id);
-
-    @Select("SELECT COUNT(*) FROM user")
-    int count();
 }

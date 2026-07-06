@@ -11,9 +11,6 @@ public interface OrderMapper {
     @Select("SELECT o.*, u.username FROM orders o LEFT JOIN user u ON o.user_id = u.id WHERE o.id = #{id}")
     Orders findById(@Param("id") Long id);
 
-    @Select("SELECT * FROM orders WHERE order_no = #{orderNo}")
-    Orders findByOrderNo(@Param("orderNo") String orderNo);
-
     @Select("SELECT * FROM orders WHERE user_id = #{userId} ORDER BY create_time DESC")
     List<Orders> findByUserId(@Param("userId") Long userId);
 
@@ -44,7 +41,4 @@ public interface OrderMapper {
 
     @Delete("DELETE FROM orders WHERE user_id=#{userId}")
     int deleteByUserId(@Param("userId") Long userId);
-
-    @Select("SELECT COUNT(*) FROM orders")
-    int count();
 }

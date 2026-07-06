@@ -14,9 +14,6 @@ public interface AdminMapper {
     @Select("SELECT * FROM admin WHERE id = #{id}")
     Admin findById(@Param("id") Long id);
 
-    @Select("SELECT * FROM admin ORDER BY create_time DESC")
-    List<Admin> findAll();
-
     @Select("<script>" +
             "SELECT * FROM admin WHERE 1=1 " +
             "<if test='keyword != null and keyword != \"\"'>" +
@@ -51,7 +48,4 @@ public interface AdminMapper {
 
     @Delete("DELETE FROM admin WHERE id=#{id}")
     int deleteById(@Param("id") Long id);
-
-    @Select("SELECT COUNT(*) FROM admin")
-    int count();
 }
