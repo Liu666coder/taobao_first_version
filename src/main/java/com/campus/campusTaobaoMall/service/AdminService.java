@@ -79,4 +79,16 @@ public class AdminService {
         admin.setPassword(null);
         return Result.success(admin);
     }
+
+    public Result<?> updateMyPassword(Long adminId, String oldPassword, String newPassword) {
+        Admin admin = adminMapper.findById(adminId);
+        if (admin == null) {
+            return Result.error("管理员不存在");
+        }
+        if (!admin.getPassword().equals(oldPassword)) {
+            return Result.error("原密码错误");
+        }
+        adminMapper.updatePassword(adminId, newPassword);
+        return Result.success("密码修改成功");
+    }
 }

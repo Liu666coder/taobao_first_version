@@ -9,6 +9,9 @@ public class Admin {
     private String username;
     private String password;
     private String realName;
+    private String email;
+    private String phone;
+    private String avatar;
     private String role;
     private Integer status;
     private LocalDateTime createTime;

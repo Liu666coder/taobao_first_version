@@ -15,14 +15,17 @@ public interface ProductMapper {
     List<Product> findEnabled();
 
     @Select("<script>" +
-            "SELECT * FROM product WHERE status = 1 " +
+            "SELECT p.* FROM product p " +
+            "LEFT JOIN category c ON p.category_id = c.id " +
+            "WHERE p.status = 1 " +
+            "AND (c.id IS NULL OR c.status = 1) " +
             "<if test='keyword != null and keyword != \"\"'>" +
-            "AND name LIKE CONCAT('%',#{keyword},'%')" +
+            "AND p.name LIKE CONCAT('%',#{keyword},'%')" +
             "</if>" +
             "<if test='categoryId != null'>" +
-            "AND category_id = #{categoryId}" +
+            "AND p.category_id = #{categoryId}" +
             "</if>" +
-            "ORDER BY create_time DESC" +
+            "ORDER BY p.create_time DESC" +
             "</script>")
     List<Product> search(@Param("keyword") String keyword, @Param("categoryId") Long categoryId);
 

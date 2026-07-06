@@ -29,14 +29,17 @@ public interface AdminMapper {
             "</script>")
     List<Admin> search(@Param("keyword") String keyword, @Param("role") String role);
 
-    @Insert("INSERT INTO admin(username, password, real_name, role, status) " +
-            "VALUES(#{username}, #{password}, #{realName}, #{role}, #{status})")
+    @Insert("INSERT INTO admin(username, password, real_name, email, phone, avatar, role, status) " +
+            "VALUES(#{username}, #{password}, #{realName}, #{email}, #{phone}, #{avatar}, #{role}, #{status})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Admin admin);
 
     @Update("<script>" +
             "UPDATE admin SET " +
             "<if test='realName != null'>real_name=#{realName},</if>" +
+            "<if test='email != null'>email=#{email},</if>" +
+            "<if test='phone != null'>phone=#{phone},</if>" +
+            "<if test='avatar != null'>avatar=#{avatar},</if>" +
             "<if test='role != null'>role=#{role},</if>" +
             "<if test='status != null'>status=#{status},</if>" +
             "update_time=NOW() WHERE id=#{id}" +
