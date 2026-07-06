@@ -32,6 +32,10 @@
             <span v-if="statusCounts[0] > 0" class="tab-badge">{{ statusCounts[0] }}</span>
           </el-radio-button>
           <el-radio-button label="1">已付款</el-radio-button>
+          <el-radio-button label="pending_ship">
+            待发货
+            <span v-if="statusCounts[1] > 0" class="tab-badge">{{ statusCounts[1] }}</span>
+          </el-radio-button>
           <el-radio-button label="2">
             已发货
             <span v-if="statusCounts[2] > 0" class="tab-badge">{{ statusCounts[2] }}</span>
@@ -145,7 +149,7 @@ const activeTab = ref('all')
 
 const statusMap = {
   0: { text: '待付款', type: 'warning' },
-  1: { text: '已付款', type: 'success' },
+  1: { text: '待发货', type: 'warning' },
   2: { text: '已发货', type: 'primary' },
   3: { text: '已完成', type: 'info' }
 }
@@ -155,6 +159,10 @@ const getStatusType = (status) => statusMap[status]?.type || 'info'
 
 const filteredOrders = computed(() => {
   if (activeTab.value === 'all') return orders.value
+  // 待发货 = 已付款(status=1)，管理员未发货
+  if (activeTab.value === 'pending_ship') {
+    return orders.value.filter(order => order.status === 1)
+  }
   return orders.value.filter(order => order.status === parseInt(activeTab.value))
 })
 
@@ -376,6 +384,16 @@ onMounted(() => {
     text-align: center;
     margin-left: 4px;
     vertical-align: middle;
+    position: relative;
+    z-index: 1;
+  }
+
+  // 选中状态下角标样式
+  .el-radio-button__original-radio:checked + .el-radio-button__inner {
+    .tab-badge {
+      background: #fff;
+      color: #ff4d4f;
+    }
   }
 }
 

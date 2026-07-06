@@ -16,15 +16,15 @@
         <div class="top-right">
           <router-link to="/admin/login" class="top-link">管理员入口</router-link>
           <el-divider direction="vertical" />
-          <router-link to="/store/orders" class="top-link order-link">
+          <span class="top-link order-link" @click="requireLogin('/store/orders')">
             我的订单
             <el-badge :value="pendingOrderCount" :hidden="pendingOrderCount === 0" class="order-badge" />
-          </router-link>
+          </span>
           <el-divider direction="vertical" />
-          <router-link to="/store/cart" class="top-link">
+          <span class="top-link" @click="requireLogin('/store/cart')">
             <el-icon><ShoppingCart /></el-icon> 购物车
             <el-badge :value="cartStore.cartCount" :hidden="cartStore.cartCount === 0" class="cart-badge" />
-          </router-link>
+          </span>
         </div>
       </div>
     </div>
@@ -134,7 +134,7 @@ import { useUserStore } from '@/store/user'
 import { useCartStore } from '@/store/cart'
 import { getCategories } from '@/api/product'
 import { getOrderList } from '@/api/order'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const route = useRoute()
@@ -158,8 +158,8 @@ const fetchPendingOrders = async () => {
   try {
     const res = await getOrderList()
     if (res.code === 200 && Array.isArray(res.data)) {
-      // 状态0=待付款，状态2=已发货待收货
-      pendingOrderCount.value = res.data.filter(o => o.status === 0 || o.status === 2).length
+      // 状态0=待付款，状态1=待发货，状态2=已发货待收货
+      pendingOrderCount.value = res.data.filter(o => o.status === 0 || o.status === 1 || o.status === 2).length
     }
   } catch (e) {
     console.error(e)
@@ -176,6 +176,14 @@ const handleSearch = () => {
 const filterByCategory = (categoryId) => {
   currentCategory.value = categoryId
   router.push({ path: '/store', query: { keyword: keyword.value, categoryId } })
+}
+
+const requireLogin = (path) => {
+  if (!userStore.token) {
+    ElMessage.warning('请先登录再操作')
+    return
+  }
+  router.push(path)
 }
 
 const handleCommand = (command) => {
