@@ -13,18 +13,23 @@ request.interceptors.request.use(
     const token = localStorage.getItem('token')
     const adminToken = localStorage.getItem('adminToken')
 
-    // 根据请求URL选择正确的token
-    if (config.url && config.url.startsWith('/admin')) {
-      // 后台管理请求使用adminToken
+    // 判断当前是否在后台管理页面
+    const isAdminPage = window.location.pathname.startsWith('/admin')
+
+    if (isAdminPage) {
+      // 后台管理页面：优先使用adminToken
       if (adminToken) {
         config.headers['Authorization'] = `Bearer ${adminToken}`
+      } else if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`
       }
-    } else if (token) {
-      // 前台用户请求使用user token
-      config.headers['Authorization'] = `Bearer ${token}`
-    } else if (adminToken) {
-      // 兜底：如果没有user token但有admin token（如后台用户访问前台）
-      config.headers['Authorization'] = `Bearer ${adminToken}`
+    } else {
+      // 前台页面：优先使用user token
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`
+      } else if (adminToken) {
+        config.headers['Authorization'] = `Bearer ${adminToken}`
+      }
     }
 
     return config
@@ -55,7 +60,7 @@ request.interceptors.response.use(
         }
         ElMessage.error('登录已过期，请重新登录')
       } else if (status === 403) {
-        ElMessage.error('没有权限访问')
+        ElMessage.error(data?.message || '没有权限访问')
       } else {
         ElMessage.error(data?.message || '请求失败')
       }

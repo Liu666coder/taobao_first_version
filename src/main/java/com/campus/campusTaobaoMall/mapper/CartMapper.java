@@ -36,6 +36,9 @@ public interface CartMapper {
     @Delete("DELETE FROM cart WHERE user_id = #{userId}")
     int deleteByUserId(@Param("userId") Long userId);
 
+    @Delete("DELETE FROM cart WHERE product_id = #{productId}")
+    int deleteByProductId(@Param("productId") Long productId);
+
     @Select("SELECT COUNT(*) FROM cart WHERE user_id = #{userId}")
     int countByUserId(@Param("userId") Long userId);
 }

@@ -8,7 +8,7 @@
     <div v-else-if="product" class="detail-main">
       <!-- 面包屑 -->
       <el-breadcrumb separator="/" class="breadcrumb">
-        <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/store' }">首页</el-breadcrumb-item>
         <el-breadcrumb-item>{{ product.categoryName }}</el-breadcrumb-item>
         <el-breadcrumb-item>{{ product.name }}</el-breadcrumb-item>
       </el-breadcrumb>
@@ -186,7 +186,7 @@ const handleBuyNow = async () => {
     })
     if (res.code === 200) {
       cartStore.fetchCartCount()
-      router.push('/cart')
+      router.push('/store/cart')
     }
   } catch (e) {
     ElMessage.error('操作失败')

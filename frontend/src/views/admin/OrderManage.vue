@@ -10,11 +10,8 @@
           <el-input v-model="searchKeyword" placeholder="订单号/用户名" clearable @keyup.enter="fetchOrders" />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchStatus" placeholder="全部" clearable>
-            <el-option label="待付款" :value="0" />
-            <el-option label="已付款" :value="1" />
-            <el-option label="已发货" :value="2" />
-            <el-option label="已完成" :value="3" />
+          <el-select v-model="searchStatus" placeholder="全部状态" clearable style="width: 140px;">
+            <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -104,6 +101,13 @@ const searchKeyword = ref('')
 const searchStatus = ref(null)
 const detailVisible = ref(false)
 const currentOrder = ref(null)
+
+const statusOptions = [
+  { label: '待付款', value: 0 },
+  { label: '已付款', value: 1 },
+  { label: '已发货', value: 2 },
+  { label: '已完成', value: 3 }
+]
 
 const statusMap = {
   0: { text: '待付款', type: 'warning' },

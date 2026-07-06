@@ -8,7 +8,7 @@ import java.util.List;
 @Mapper
 public interface OrderMapper {
 
-    @Select("SELECT * FROM orders WHERE id = #{id}")
+    @Select("SELECT o.*, u.username FROM orders o LEFT JOIN user u ON o.user_id = u.id WHERE o.id = #{id}")
     Orders findById(@Param("id") Long id);
 
     @Select("SELECT * FROM orders WHERE order_no = #{orderNo}")

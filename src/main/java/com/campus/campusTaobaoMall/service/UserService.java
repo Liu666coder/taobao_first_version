@@ -4,7 +4,6 @@ import com.campus.campusTaobaoMall.dto.LoginRequest;
 import com.campus.campusTaobaoMall.entity.User;
 import com.campus.campusTaobaoMall.mapper.UserMapper;
 import com.campus.campusTaobaoMall.util.JwtUtil;
-import com.campus.campusTaobaoMall.util.VerificationCodeUtil;
 import com.campus.campusTaobaoMall.vo.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,17 +30,12 @@ public class UserService {
     public Result<?> login(LoginRequest request) {
         // 根据登录类型进行验证
         if ("phone".equals(request.getLoginType())) {
-            // 手机号+密码登录
             return loginByPhone(request);
         } else {
-            // 账号+密码登录（默认）
             return loginByPassword(request);
         }
     }
 
-    /**
-     * 账号+密码登录
-     */
     private Result<?> loginByPassword(LoginRequest request) {
         if (request.getUsername() == null || request.getPassword() == null) {
             return Result.error("账号和密码不能为空");
@@ -61,15 +55,11 @@ public class UserService {
         return Result.success(token);
     }
 
-    /**
-     * 手机号+密码登录
-     */
     private Result<?> loginByPhone(LoginRequest request) {
         if (request.getPhone() == null || request.getPassword() == null) {
             return Result.error("手机号和密码不能为空");
         }
 
-        // 根据手机号查找用户
         User user = userMapper.findByPhone(request.getPhone());
         if (user == null) {
             return Result.error("用户不存在");
@@ -90,7 +80,7 @@ public class UserService {
         if (user == null) {
             return Result.error("用户不存在");
         }
-        user.setPassword(null); // 不返回密码
+        user.setPassword(null);
         return Result.success(user);
     }
 

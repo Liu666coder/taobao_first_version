@@ -16,9 +16,9 @@
         <div class="top-right">
           <router-link to="/admin/login" class="top-link">卖家中心</router-link>
           <el-divider direction="vertical" />
-          <router-link to="/orders" class="top-link">我的订单</router-link>
+          <router-link to="/store/orders" class="top-link">我的订单</router-link>
           <el-divider direction="vertical" />
-          <router-link to="/cart" class="top-link">
+          <router-link to="/store/cart" class="top-link">
             <el-icon><ShoppingCart /></el-icon> 购物车
             <el-badge :value="cartStore.cartCount" :hidden="cartStore.cartCount === 0" class="cart-badge" />
           </router-link>
@@ -204,9 +204,9 @@ const filterByCategory = (categoryId) => {
 
 const handleCommand = (command) => {
   if (command === 'profile') {
-    router.push('/profile')
+    router.push('/store/profile')
   } else if (command === 'orders') {
-    router.push('/orders')
+    router.push('/store/orders')
   } else if (command === 'logout') {
     userStore.logout()
     cartStore.cartCount = 0

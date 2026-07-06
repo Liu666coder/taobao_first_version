@@ -90,8 +90,25 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="图片URL">
-          <el-input v-model="form.image" placeholder="请输入图片链接" />
+        <el-form-item label="商品图片">
+          <div class="image-upload-area">
+            <el-upload
+              class="image-uploader"
+              :action="uploadUrl"
+              :headers="uploadHeaders"
+              :show-file-list="false"
+              :before-upload="beforeUpload"
+              :on-success="handleUploadSuccess"
+              :on-error="handleUploadError"
+              accept="image/*"
+            >
+              <img v-if="form.image" :src="form.image" class="preview-image" />
+              <div v-else class="upload-placeholder">
+                <el-icon size="40"><Upload /></el-icon>
+                <span>点击上传图片</span>
+              </div>
+            </el-upload>
+          </div>
         </el-form-item>
         <el-form-item label="商品描述">
           <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入商品描述" />
@@ -107,7 +124,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { getAdminProducts, addProduct, updateProduct, deleteProduct, updateProductStatus, getAdminCategories } from '@/api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -117,6 +134,39 @@ const products = ref([])
 const categories = ref([])
 const dialogVisible = ref(false)
 const isEdit = ref(false)
+const uploadUrl = '/api/upload/image'
+
+const uploadHeaders = computed(() => ({
+  Authorization: `Bearer ${localStorage.getItem('adminToken') || ''}`
+}))
+
+const beforeUpload = (file) => {
+  const isImage = file.type.startsWith('image/')
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件!')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('图片大小不能超过 2MB!')
+    return false
+  }
+  return true
+}
+
+const handleUploadSuccess = (response) => {
+  if (response.code === 200) {
+    form.image = response.data
+    ElMessage.success('图片上传成功')
+  } else {
+    ElMessage.error(response.message || '上传失败')
+  }
+}
+
+const handleUploadError = () => {
+  ElMessage.error('图片上传失败')
+}
 const formRef = ref(null)
 
 const searchKeyword = ref('')
@@ -288,5 +338,48 @@ onMounted(() => {
 .price {
   color: #FF4400;
   font-weight: bold;
+}
+
+.image-upload-area {
+  width: 100%;
+
+  .image-uploader {
+    :deep(.el-upload) {
+      border: 1px dashed #d9d9d9;
+      border-radius: 8px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s;
+      width: 180px;
+      height: 180px;
+
+      &:hover {
+        border-color: #FF4400;
+      }
+    }
+  }
+
+  .preview-image {
+    width: 180px;
+    height: 180px;
+    display: block;
+    object-fit: cover;
+  }
+
+  .upload-placeholder {
+    width: 180px;
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    gap: 8px;
+
+    span {
+      font-size: 13px;
+    }
+  }
 }
 </style>

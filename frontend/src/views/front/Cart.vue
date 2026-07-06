@@ -32,7 +32,7 @@
           <div class="col-product">
             <img :src="item.productImage || '/placeholder.png'" class="product-img" />
             <div class="product-info">
-              <div class="product-name" @click="$router.push(`/product/${item.productId}`)">
+              <div class="product-name" @click="$router.push(`/store/product/${item.productId}`)">
                 {{ item.productName }}
               </div>
             </div>
@@ -171,7 +171,7 @@ const handleCheckout = () => {
     ElMessage.warning('请选择要结算的商品')
     return
   }
-  router.push({ path: '/orders', query: { cartIds: cartStore.selectedIds.join(',') } })
+  router.push({ path: '/store/orders', query: { cartIds: cartStore.selectedIds.join(',') } })
 }
 
 onMounted(() => {

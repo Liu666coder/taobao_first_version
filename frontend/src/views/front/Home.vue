@@ -105,7 +105,7 @@ const fetchProducts = async () => {
 }
 
 const goDetail = (id) => {
-  router.push(`/product/${id}`)
+  router.push(`/store/product/${id}`)
 }
 
 const filterByCategory = (categoryId) => {

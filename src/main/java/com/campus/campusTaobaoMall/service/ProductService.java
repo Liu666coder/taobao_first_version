@@ -3,7 +3,9 @@ package com.campus.campusTaobaoMall.service;
 import com.campus.campusTaobaoMall.dto.ProductDTO;
 import com.campus.campusTaobaoMall.entity.Category;
 import com.campus.campusTaobaoMall.entity.Product;
+import com.campus.campusTaobaoMall.mapper.CartMapper;
 import com.campus.campusTaobaoMall.mapper.CategoryMapper;
+import com.campus.campusTaobaoMall.mapper.OrderItemMapper;
 import com.campus.campusTaobaoMall.mapper.ProductMapper;
 import com.campus.campusTaobaoMall.vo.Result;
 import org.springframework.beans.BeanUtils;
@@ -20,6 +22,12 @@ public class ProductService {
 
     @Autowired
     private CategoryMapper categoryMapper;
+
+    @Autowired
+    private CartMapper cartMapper;
+
+    @Autowired
+    private OrderItemMapper orderItemMapper;
 
     public Result<?> getProductList(String keyword, Long categoryId) {
         List<Product> products = productMapper.search(keyword, categoryId);
@@ -79,6 +87,10 @@ public class ProductService {
     }
 
     public Result<?> deleteProduct(Long id) {
+        // 先删除关联记录
+        cartMapper.deleteByProductId(id);
+        orderItemMapper.deleteByProductId(id);
+        // 再删除商品
         productMapper.deleteById(id);
         return Result.success("删除成功");
     }

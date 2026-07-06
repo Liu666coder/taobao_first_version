@@ -104,6 +104,12 @@ const routes = [
         name: 'OrderManage',
         component: () => import('@/views/admin/OrderManage.vue'),
         meta: { title: '订单管理' }
+      },
+      {
+        path: 'profile',
+        name: 'AdminProfile',
+        component: () => import('@/views/admin/AdminProfile.vue'),
+        meta: { title: '个人资料' }
       }
     ]
   }

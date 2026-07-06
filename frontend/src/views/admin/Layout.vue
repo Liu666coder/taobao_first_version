@@ -69,14 +69,18 @@
           <el-dropdown @command="handleCommand">
             <span class="admin-name">
               <div class="avatar-small">
-                <el-icon size="16"><User /></el-icon>
+                <img v-if="adminInfo?.avatar" :src="adminInfo.avatar" class="avatar-img" />
+                <el-icon v-else size="16"><User /></el-icon>
               </div>
               {{ adminInfo?.realName || adminInfo?.username || '管理员' }}
               <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="logout">
+                <el-dropdown-item command="profile">
+                  <el-icon><User /></el-icon>个人资料
+                </el-dropdown-item>
+                <el-dropdown-item divided command="logout">
                   <el-icon><SwitchButton /></el-icon>退出登录
                 </el-dropdown-item>
               </el-dropdown-menu>
@@ -94,7 +98,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, provide } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getAdminInfo } from '@/api/admin'
 
@@ -126,12 +130,35 @@ const hasUserPermission = computed(() => {
 
 const isAdmin = computed(() => adminInfo.value?.role === 'SYSTEM_ADMIN')
 
+const fetchAdminInfo = async () => {
+  try {
+    const res = await getAdminInfo()
+    if (res.code === 200) {
+      adminInfo.value = res.data
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+// 提供给子组件刷新管理员信息的方法
+provide('refreshAdminInfo', fetchAdminInfo)
+
 const handleCommand = (command) => {
-  if (command === 'logout') {
+  if (command === 'profile') {
+    router.push('/admin/profile')
+  } else if (command === 'logout') {
     localStorage.removeItem('adminToken')
     router.push('/admin/login')
   }
 }
+
+// 监听路由变化，从个人资料页返回时刷新管理员信息
+watch(() => route.path, (newPath, oldPath) => {
+  if (oldPath === '/admin/profile' && newPath !== '/admin/profile') {
+    fetchAdminInfo()
+  }
+})
 
 onMounted(async () => {
   try {
@@ -253,6 +280,13 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   color: #fff;
+  overflow: hidden;
+
+  .avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
 
 .content-area {

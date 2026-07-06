@@ -20,4 +20,7 @@ public interface OrderItemMapper {
 
     @Delete("DELETE FROM order_item WHERE order_id = #{orderId}")
     int deleteByOrderId(@Param("orderId") Long orderId);
+
+    @Delete("DELETE FROM order_item WHERE product_id = #{productId}")
+    int deleteByProductId(@Param("productId") Long productId);
 }

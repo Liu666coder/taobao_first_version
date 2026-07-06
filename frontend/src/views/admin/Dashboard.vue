@@ -12,7 +12,7 @@
     </div>
 
     <div class="stats-grid">
-      <div class="stat-card" v-for="stat in stats" :key="stat.label">
+      <div class="stat-card" v-for="stat in visibleStats" :key="stat.label">
         <div class="stat-icon" :style="{ background: stat.color }">
           <el-icon :size="28"><component :is="stat.icon" /></el-icon>
         </div>
@@ -26,7 +26,7 @@
     <div class="quick-actions">
       <h3>快捷操作</h3>
       <div class="action-grid">
-        <div class="action-item" @click="$router.push('/admin/products')">
+        <div class="action-item" @click="$router.push('/admin/products')" v-if="hasProductPermission">
           <el-icon size="24"><Goods /></el-icon>
           <span>商品管理</span>
         </div>
@@ -38,9 +38,13 @@
           <el-icon size="24"><User /></el-icon>
           <span>用户管理</span>
         </div>
-        <div class="action-item" @click="$router.push('/admin/categories')">
+        <div class="action-item" @click="$router.push('/admin/categories')" v-if="hasProductPermission">
           <el-icon size="24"><Grid /></el-icon>
           <span>分类管理</span>
+        </div>
+        <div class="action-item" @click="$router.push('/admin/admins')" v-if="isAdmin">
+          <el-icon size="24"><UserFilled /></el-icon>
+          <span>管理员管理</span>
         </div>
       </div>
     </div>
@@ -54,16 +58,31 @@ import { getAdminInfo, getAdminProducts, getAdminCategories, getUserList, getAdm
 const adminInfo = ref(null)
 let timerInterval = null
 const currentTime = ref('')
-const stats = ref([
-  { label: '注册用户', value: 0, icon: 'User', color: '#FF4400' },
-  { label: '商品总数', value: 0, icon: 'Goods', color: '#67C23A' },
-  { label: '订单总数', value: 0, icon: 'Document', color: '#409EFF' },
-  { label: '商品分类', value: 0, icon: 'Grid', color: '#E6A23C' }
+
+const allStats = ref([
+  { label: '注册用户', value: 0, icon: 'User', color: '#FF4400', key: 'users', roles: ['MARKETING_MANAGER', 'SYSTEM_ADMIN'] },
+  { label: '商品总数', value: 0, icon: 'Goods', color: '#67C23A', key: 'products', roles: ['PRODUCT_MANAGER', 'MARKETING_MANAGER', 'SYSTEM_ADMIN'] },
+  { label: '订单总数', value: 0, icon: 'Document', color: '#409EFF', key: 'orders', roles: ['PRODUCT_MANAGER', 'MARKETING_MANAGER', 'SYSTEM_ADMIN'] },
+  { label: '商品分类', value: 0, icon: 'Grid', color: '#E6A23C', key: 'categories', roles: ['PRODUCT_MANAGER', 'MARKETING_MANAGER', 'SYSTEM_ADMIN'] }
 ])
+
+const hasProductPermission = computed(() => {
+  const role = adminInfo.value?.role
+  return role === 'PRODUCT_MANAGER' || role === 'MARKETING_MANAGER' || role === 'SYSTEM_ADMIN'
+})
 
 const hasUserPermission = computed(() => {
   const role = adminInfo.value?.role
   return role === 'MARKETING_MANAGER' || role === 'SYSTEM_ADMIN'
+})
+
+const isAdmin = computed(() => adminInfo.value?.role === 'SYSTEM_ADMIN')
+
+// 根据当前角色过滤显示的统计卡片
+const visibleStats = computed(() => {
+  const role = adminInfo.value?.role
+  if (!role) return allStats.value
+  return allStats.value.filter(stat => stat.roles.includes(role))
 })
 
 const getGreeting = () => {
@@ -91,22 +110,48 @@ const updateTime = () => {
 
 const fetchStats = async () => {
   try {
-    const [adminRes, users, products, orders, categories] = await Promise.all([
-      getAdminInfo(),
-      getUserList(),
-      getAdminProducts(),
-      getAdminOrders(),
-      getAdminCategories()
-    ])
+    // 先获取管理员信息确定角色
+    const adminRes = await getAdminInfo()
+    if (adminRes.code === 200) {
+      adminInfo.value = adminRes.data
+    } else {
+      return
+    }
 
-    if (adminRes.code === 200) adminInfo.value = adminRes.data
+    const role = adminInfo.value?.role
 
-    stats.value[0].value = Array.isArray(users.data) ? users.data.length : 0
-    stats.value[1].value = Array.isArray(products.data) ? products.data.length : 0
-    stats.value[2].value = Array.isArray(orders.data) ? orders.data.length : 0
-    stats.value[3].value = Array.isArray(categories.data) ? categories.data.length : 0
+    // 根据角色并行请求有权限的数据
+    const promises = []
+    const promiseKeys = []
+
+    // 所有角色都可以查看商品和分类
+    promises.push(getAdminProducts())
+    promiseKeys.push('products')
+
+    promises.push(getAdminCategories())
+    promiseKeys.push('categories')
+
+    // 所有角色都可以查看订单
+    promises.push(getAdminOrders())
+    promiseKeys.push('orders')
+
+    // 只有营销经理和系统管理员可以查看用户列表
+    if (role === 'MARKETING_MANAGER' || role === 'SYSTEM_ADMIN') {
+      promises.push(getUserList())
+      promiseKeys.push('users')
+    }
+
+    const results = await Promise.all(promises)
+
+    results.forEach((res, index) => {
+      const key = promiseKeys[index]
+      const statItem = allStats.value.find(s => s.key === key)
+      if (statItem && res.code === 200 && Array.isArray(res.data)) {
+        statItem.value = res.data.length
+      }
+    })
   } catch (e) {
-    console.error(e)
+    console.error('获取统计数据失败:', e)
   }
 }
 

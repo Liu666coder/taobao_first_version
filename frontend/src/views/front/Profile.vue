@@ -95,7 +95,7 @@
               <p>点击下方按钮查看{{ activeMenu === 'orders' ? '订单' : '购物车' }}详情</p>
             </template>
             <template #extra>
-              <el-button type="primary" @click="$router.push(activeMenu === 'orders' ? '/orders' : '/cart')">
+              <el-button type="primary" @click="$router.push(activeMenu === 'orders' ? '/store/orders' : '/store/cart')">
                 {{ activeMenu === 'orders' ? '我的订单' : '我的购物车' }}
               </el-button>
             </template>
