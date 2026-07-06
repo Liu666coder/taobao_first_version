@@ -6,12 +6,29 @@
     <!-- 背景星尘粒子层 -->
     <canvas ref="bgCanvas" class="bg-canvas"></canvas>
 
+    <!-- 柔光粒子云（星云） -->
+    <div class="nebula">
+      <span class="cloud cloud-1"></span>
+      <span class="cloud cloud-2"></span>
+      <span class="cloud cloud-3"></span>
+      <span class="cloud cloud-4"></span>
+    </div>
+
     <!-- 星云光晕 -->
     <div class="aurora">
       <span class="aurora-blob blob-1"></span>
       <span class="aurora-blob blob-2"></span>
       <span class="aurora-blob blob-3"></span>
     </div>
+
+    <!-- 星点扩散层 -->
+    <div class="stars">
+      <span v-for="s in starList" :key="s.id" class="star"
+            :style="{ left: s.left, top: s.top, animationDelay: s.delay, animationDuration: s.dur }"></span>
+    </div>
+
+    <!-- 细腻噪点纹理 -->
+    <div class="noise"></div>
 
     <!-- 极淡数字网格 -->
     <div class="grid-overlay"></div>
@@ -20,6 +37,8 @@
     <div class="hero" :class="{ 'hero-lit': cartLit }">
       <!-- 能量环 / 轨道 -->
       <div class="rings" :class="{ 'rings-show': ringsShow }">
+        <span class="energy-core"></span>
+        <span class="ring ring-glass"></span>
         <span class="ring ring-1"></span>
         <span class="ring ring-2"></span>
         <span class="ring ring-3"></span>
@@ -128,34 +147,57 @@ const isLeaving = ref(false)    // 退场
 
 const tags = ['精选好物', '校园极速达', '安心售后', '专属优惠']
 
+// 星点扩散：随机分布的闪烁星点（移动端减少）
+const starCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 22 : 42
+const starList = Array.from({ length: starCount }, (_, i) => ({
+  id: i,
+  left: `${Math.random() * 100}%`,
+  top: `${Math.random() * 100}%`,
+  delay: `${(Math.random() * 6).toFixed(2)}s`,
+  dur: `${(Math.random() * 4 + 3).toFixed(2)}s`
+}))
+
 /* ============ 背景星尘粒子 ============ */
 let bgCtx = null, bgRaf = null, bgParticles = []
 let bgW = 0, bgH = 0, dpr = 1
 
-const bgPalette = [
-  { color: '255, 140, 50', depth: 0.35 },  // 远景 橙
-  { color: '255, 205, 140', depth: 0.65 }, // 中景 暖金
-  { color: '150, 195, 255', depth: 1 }     // 近景 微光蓝
-]
+// 按景深插值颜色：远处偏冷蓝、暗；近处偏暖金、亮（不刺眼）
+// depth: 0 = 最远, 1 = 最近
+const depthColor = (depth) => {
+  // 远景微光蓝 -> 近景暖金橙
+  const far = [130, 175, 235]
+  const near = [255, 200, 140]
+  const r = Math.round(far[0] + (near[0] - far[0]) * depth)
+  const g = Math.round(far[1] + (near[1] - far[1]) * depth)
+  const b = Math.round(far[2] + (near[2] - far[2]) * depth)
+  return `${r}, ${g}, ${b}`
+}
 
 const buildBgParticles = () => {
   const w = window.innerWidth
   const count = w < 480 ? 45 : w < 768 ? 80 : 150
   bgParticles = []
   for (let i = 0; i < count; i++) {
-    const layer = bgPalette[Math.floor(Math.random() * bgPalette.length)]
+    // 连续景深：偏向远处更多（sqrt 让远景粒子占比更高，营造纵深）
+    const depth = Math.pow(Math.random(), 1.4)
     bgParticles.push({
       x: Math.random() * bgW,
       y: Math.random() * bgH,
-      r: (Math.random() * 1.6 + 0.4) * layer.depth,
-      color: layer.color,
-      alpha: (Math.random() * 0.5 + 0.2) * layer.depth,
-      vx: (Math.random() - 0.5) * 0.22 * layer.depth,
-      vy: (Math.random() - 0.5) * 0.22 * layer.depth,
+      depth,
+      // 远处小(0.3px) -> 近处略大(2.4px)
+      r: 0.3 + depth * 2.1,
+      color: depthColor(depth),
+      // 远处暗(0.12) -> 近处亮但封顶(0.68)，避免刺眼
+      baseAlpha: 0.12 + depth * 0.56,
+      // 近处漂移快，远处几乎静止，强化视差
+      vx: (Math.random() - 0.5) * (0.05 + depth * 0.28),
+      vy: (Math.random() - 0.5) * (0.05 + depth * 0.28),
       tw: Math.random() * Math.PI * 2,
       tws: Math.random() * 0.02 + 0.004
     })
   }
+  // 远景先画、近景后画，保证近处粒子叠在上层
+  bgParticles.sort((a, b) => a.depth - b.depth)
 }
 
 const drawBg = () => {
@@ -165,12 +207,15 @@ const drawBg = () => {
     if (p.x < 0) p.x = bgW; if (p.x > bgW) p.x = 0
     if (p.y < 0) p.y = bgH; if (p.y > bgH) p.y = 0
     p.tw += p.tws
-    const a = p.alpha * (0.5 + ((Math.sin(p.tw) + 1) / 2) * 0.5)
+    // 闪烁：近处粒子闪烁幅度更明显，远处更稳定
+    const flick = (Math.sin(p.tw) + 1) / 2
+    const a = p.baseAlpha * (0.55 + flick * 0.45 * p.depth + 0.2 * (1 - p.depth) * flick)
     bgCtx.beginPath()
     bgCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
     bgCtx.fillStyle = `rgba(${p.color}, ${a})`
-    bgCtx.shadowBlur = p.r * 4
-    bgCtx.shadowColor = `rgba(${p.color}, ${a})`
+    // 只有近处粒子带明显辉光，远处几乎无光晕
+    bgCtx.shadowBlur = p.depth * p.r * 4
+    bgCtx.shadowColor = `rgba(${p.color}, ${a * p.depth})`
     bgCtx.fill()
   }
   bgCtx.shadowBlur = 0
@@ -380,7 +425,12 @@ $gold: #ffd28c;
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background: radial-gradient(ellipse 130% 90% at 50% 30%, $deep-3 0%, $deep-2 48%, $deep-1 100%);
+  // 多层深色渐变：中心暖光晕 + 顶部冷蓝 + 底部曜石黑，叠出纵深
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 32%, rgba(255,122,24,0.10) 0%, transparent 55%),
+    radial-gradient(ellipse 120% 80% at 50% 0%, rgba(40,90,180,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 130% 90% at 50% 30%, $deep-3 0%, $deep-2 48%, $deep-1 100%),
+    linear-gradient(180deg, #06101f 0%, #030711 100%);
   font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
   transition: opacity 0.95s ease, filter 0.95s ease;
   // 背景由深色渐显
@@ -423,6 +473,65 @@ $gold: #ffd28c;
 @keyframes drift {
   0%, 100% { transform: translate(0,0) scale(1); }
   50% { transform: translate(-4%,4%) scale(1.08); }
+}
+
+/* 柔光粒子云：大面积低透明度模糊光团，缓慢流动 */
+.nebula { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.cloud {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  mix-blend-mode: screen;
+  opacity: 0.35;
+  &.cloud-1 {
+    width: 38vw; height: 38vw; top: 12%; left: 8%;
+    background: radial-gradient(circle, rgba(255,150,70,0.35), transparent 68%);
+    animation: cloudFlow 26s ease-in-out infinite;
+  }
+  &.cloud-2 {
+    width: 32vw; height: 32vw; top: 45%; right: 6%;
+    background: radial-gradient(circle, rgba(90,150,255,0.32), transparent 68%);
+    animation: cloudFlow 32s ease-in-out infinite reverse;
+  }
+  &.cloud-3 {
+    width: 28vw; height: 28vw; bottom: 8%; left: 30%;
+    background: radial-gradient(circle, rgba(160,120,255,0.22), transparent 70%);
+    animation: cloudFlow 30s ease-in-out infinite;
+  }
+  &.cloud-4 {
+    width: 24vw; height: 24vw; top: 6%; right: 22%;
+    background: radial-gradient(circle, rgba(255,200,130,0.2), transparent 70%);
+    animation: cloudFlow 24s ease-in-out infinite reverse;
+  }
+}
+@keyframes cloudFlow {
+  0%, 100% { transform: translate(0,0) scale(1); opacity: 0.28; }
+  50% { transform: translate(6%,-5%) scale(1.15); opacity: 0.45; }
+}
+
+/* 细腻噪点：SVG 分形噪声，极低透明度叠加，消除色带、增加质感 */
+.noise {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  mix-blend-mode: overlay;
+}
+
+/* 星点扩散：微小星点由中心淡出并放大，营造星尘扩散 */
+.stars { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.star {
+  position: absolute;
+  width: 2px; height: 2px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 0 6px rgba(180,210,255,0.8);
+  opacity: 0;
+  animation: starPulse ease-in-out infinite;
+}
+@keyframes starPulse {
+  0%, 100% { opacity: 0; transform: scale(0.4); }
+  50% { opacity: 0.9; transform: scale(1.3); }
 }
 
 /* 数字网格 */
@@ -484,15 +593,76 @@ $gold: #ffd28c;
 }
 .rings-show { opacity: 1; }
 
+/* 玻璃能量核心：径向渐变 + 模糊光晕，半透明呼吸 */
+.energy-core {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%,
+    rgba(255,190,120,0.28) 0%,
+    rgba(255,122,24,0.16) 32%,
+    rgba(120,160,255,0.08) 58%,
+    transparent 72%);
+  filter: blur(6px);
+  animation: coreBreathe 4.5s ease-in-out infinite;
+}
+@keyframes coreBreathe {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.12); opacity: 1; }
+}
+
 .ring {
   position: absolute;
   border-radius: 50%;
   border: 1px solid rgba(255,170,90,0.22);
-  &.ring-1 { width: 300px; height: 300px; border-top-color: rgba(255,122,24,0.7); animation: spin 7s linear infinite; }
-  &.ring-2 { width: 350px; height: 350px; border-left-color: rgba(120,180,255,0.5); animation: spin 11s linear infinite reverse; }
-  &.ring-3 { width: 260px; height: 260px; border-bottom-color: rgba(255,205,140,0.55); animation: spin 9s linear infinite; }
+
+  /* 玻璃质感环：半透明厚边框 + 内外双层光晕 + 微弱径向反光 */
+  &.ring-glass {
+    width: 322px;
+    height: 322px;
+    border: 2px solid rgba(255,255,255,0.14);
+    background: radial-gradient(circle,
+      transparent 62%,
+      rgba(255,180,120,0.06) 74%,
+      rgba(255,255,255,0.10) 82%,
+      transparent 90%);
+    box-shadow:
+      0 0 34px rgba(255,122,24,0.28),
+      inset 0 0 26px rgba(255,190,130,0.22),
+      inset 0 2px 14px rgba(255,255,255,0.18);
+    backdrop-filter: blur(2px);
+    animation: glassSpin 16s linear infinite, glassGlow 4.5s ease-in-out infinite;
+  }
+
+  &.ring-1 {
+    width: 300px; height: 300px;
+    border-top-color: rgba(255,122,24,0.85);
+    border-right-color: rgba(255,122,24,0.25);
+    box-shadow: 0 0 16px rgba(255,122,24,0.35), inset 0 0 12px rgba(255,140,50,0.12);
+    animation: spin 7s linear infinite;
+  }
+  &.ring-2 {
+    width: 350px; height: 350px;
+    border-left-color: rgba(120,180,255,0.6);
+    border-bottom-color: rgba(120,180,255,0.18);
+    box-shadow: 0 0 16px rgba(90,150,255,0.28), inset 0 0 12px rgba(120,180,255,0.1);
+    animation: spin 11s linear infinite reverse;
+  }
+  &.ring-3 {
+    width: 260px; height: 260px;
+    border-bottom-color: rgba(255,205,140,0.7);
+    border-left-color: rgba(255,205,140,0.2);
+    box-shadow: 0 0 14px rgba(255,205,140,0.3);
+    animation: spin 9s linear infinite;
+  }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes glassSpin { to { transform: rotate(-360deg); } }
+@keyframes glassGlow {
+  0%, 100% { box-shadow: 0 0 30px rgba(255,122,24,0.22), inset 0 0 24px rgba(255,190,130,0.18), inset 0 2px 14px rgba(255,255,255,0.16); }
+  50% { box-shadow: 0 0 48px rgba(255,122,24,0.42), inset 0 0 32px rgba(255,190,130,0.3), inset 0 2px 16px rgba(255,255,255,0.24); }
+}
 
 /* 轨道粒子（绕车公转） */
 .orbit-dot {
@@ -628,6 +798,8 @@ $gold: #ffd28c;
 @media (max-width: 768px) {
   .hero { top: 30%; width: 260px; height: 260px; }
   .cart-svg { width: 260px; height: 216px; }
+  .energy-core { width: 230px; height: 230px; }
+  .ring-glass { width: 248px; height: 248px; }
   .ring-1 { width: 230px; height: 230px; }
   .ring-2 { width: 270px; height: 270px; }
   .ring-3 { width: 200px; height: 200px; }
@@ -649,7 +821,7 @@ $gold: #ffd28c;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cart-svg, .ring, .orbit-dot, .enter-btn, .aurora-blob, .enter-hint {
+  .cart-svg, .ring, .energy-core, .orbit-dot, .enter-btn, .aurora-blob, .cloud, .star, .enter-hint {
     animation: none !important;
   }
 }
