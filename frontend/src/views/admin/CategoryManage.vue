@@ -8,7 +8,49 @@
     </div>
 
     <div class="table-card">
-      <el-table :data="categories" v-loading="loading" style="width: 100%">
+      <el-table
+        :data="categories"
+        v-loading="loading"
+        style="width: 100%"
+        row-key="id"
+        :expand-row-keys="expandedRows"
+        @expand-change="handleExpandChange"
+      >
+        <el-table-column type="expand">
+          <template #default="{ row }">
+            <div class="expand-products">
+              <div v-if="row._productsLoading" class="products-loading">加载中...</div>
+              <div v-else-if="!row._products || row._products.length === 0" class="products-empty">该分类下暂无商品</div>
+              <template v-else>
+                <div class="products-summary">
+                  共 <strong>{{ row._products.length }}</strong> 件上架商品
+                </div>
+                <table class="products-table">
+                  <thead>
+                    <tr>
+                      <th>商品名称</th>
+                      <th>库存</th>
+                      <th>价格</th>
+                      <th>状态</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="p in row._products" :key="p.id">
+                      <td>{{ p.name }}</td>
+                      <td>{{ p.stock }}</td>
+                      <td class="price">¥{{ p.price }}</td>
+                      <td>
+                        <el-tag :type="p.status === 1 ? 'success' : 'info'" size="small">
+                          {{ p.status === 1 ? '在售' : '下架' }}
+                        </el-tag>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </template>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="分类名称" min-width="150" />
         <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
@@ -51,7 +93,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { getAdminCategories, addCategory, updateCategory, deleteCategory, updateCategoryStatus } from '@/api/admin'
+import { getAdminCategories, addCategory, updateCategory, deleteCategory, updateCategoryStatus, getAdminProducts } from '@/api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
@@ -60,6 +102,7 @@ const categories = ref([])
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const formRef = ref(null)
+const expandedRows = ref([])
 
 const form = reactive({ id: null, name: '', description: '' })
 const rules = { name: [{ required: true, message: '请输入分类名称', trigger: 'blur' }] }
@@ -75,6 +118,30 @@ const fetchCategories = async () => {
     console.error(e)
   } finally {
     loading.value = false
+  }
+}
+
+const handleExpandChange = (row, expanded) => {
+  // 展开时加载商品
+  if (expanded.some(r => r.id === row.id)) {
+    fetchCategoryProducts(row)
+  }
+}
+
+const fetchCategoryProducts = async (row) => {
+  // 已加载过则跳过
+  if (row._products !== undefined) return
+  row._productsLoading = true
+  row._products = []
+  try {
+    const res = await getAdminProducts({ categoryId: row.id, status: 1 })
+    if (res.code === 200) {
+      row._products = Array.isArray(res.data) ? res.data : []
+    }
+  } catch (e) {
+    console.error(e)
+  } finally {
+    row._productsLoading = false
   }
 }
 
@@ -163,5 +230,54 @@ onMounted(fetchCategories)
   border-radius: 8px;
   padding: 0;
   overflow: hidden;
+}
+
+.expand-products {
+  padding: 12px 20px 12px 60px;
+  background: #fafafa;
+
+  .products-loading,
+  .products-empty {
+    color: #999;
+    font-size: 13px;
+    text-align: center;
+    padding: 12px 0;
+  }
+
+  .products-summary {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 10px;
+
+    strong {
+      color: #ff4400;
+      font-size: 15px;
+    }
+  }
+
+  .products-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+
+    th {
+      text-align: left;
+      padding: 8px 12px;
+      color: #999;
+      font-weight: normal;
+      border-bottom: 1px solid #eee;
+    }
+
+    td {
+      padding: 8px 12px;
+      color: #333;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .price {
+      color: #ff4400;
+      font-weight: 500;
+    }
+  }
 }
 </style>
