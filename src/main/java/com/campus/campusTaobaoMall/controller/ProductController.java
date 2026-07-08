@@ -7,6 +7,10 @@ import com.campus.campusTaobaoMall.vo.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 商品管理控制器
+ * 提供前台商品浏览（搜索、详情、分类）和后台商品增删改查、分类管理等接口
+ */
 @RestController
 @RequestMapping("/api")
 public class ProductController {

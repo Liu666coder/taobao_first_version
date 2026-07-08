@@ -22,6 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 订单业务服务层
+ * 处理订单创建（含库存扣减、购物车清理）、支付、取消（含库存恢复）、确认收货及后台管理等核心业务逻辑
+ */
 @Service
 public class OrderService {
 
@@ -40,6 +44,9 @@ public class OrderService {
     @Autowired
     private UserMapper userMapper;
 
+    /**
+     * 创建订单：校验库存 -> 生成订单号 -> 创建订单和明细 -> 扣减库存 -> 清理购物车
+     */
     @Transactional
     public Result<?> createOrder(Long userId, List<Long> cartIds) {
         // 获取用户信息
@@ -109,6 +116,9 @@ public class OrderService {
         return Result.success(order);
     }
 
+    /**
+     * 查询用户订单列表，同时加载每个订单的商品明细
+     */
     public Result<?> getOrderList(Long userId) {
         List<Orders> orders = orderMapper.findByUserId(userId);
         // 为每个订单加载商品信息（含图片）
@@ -119,6 +129,9 @@ public class OrderService {
         return Result.success(orders);
     }
 
+    /**
+     * 查询单个订单详情（含商品明细）
+     */
     public Result<?> getOrderDetail(Long orderId) {
         Orders order = orderMapper.findById(orderId);
         if (order == null) {
@@ -129,6 +142,9 @@ public class OrderService {
         return Result.success(order);
     }
 
+    /**
+     * 模拟支付：将待付款订单状态更新为已付款
+     */
     public Result<?> payOrder(Long orderId) {
         Orders order = orderMapper.findById(orderId);
         if (order == null) {
@@ -141,6 +157,9 @@ public class OrderService {
         return Result.success("付款成功");
     }
 
+    /**
+     * 取消待付款订单：恢复库存 -> 删除订单明细 -> 删除订单
+     */
     @Transactional
     public Result<?> cancelOrder(Long orderId) {
         Orders order = orderMapper.findById(orderId);
@@ -168,6 +187,9 @@ public class OrderService {
         return Result.success("取消成功");
     }
 
+    /**
+     * 确认收货：将已发货订单状态更新为已完成
+     */
     public Result<?> confirmReceive(Long orderId) {
         Orders order = orderMapper.findById(orderId);
         if (order == null) {
@@ -180,12 +202,17 @@ public class OrderService {
         return Result.success("确认收货成功");
     }
 
-    // 后台管理
+    /**
+     * 后台搜索订单（支持关键字和状态筛选）
+     */
     public Result<?> getAllOrders(String keyword, Integer status) {
         List<Orders> orders = orderMapper.searchAdmin(keyword, status);
         return Result.success(orders);
     }
 
+    /**
+     * 后台管理员更新订单状态（如发货等）
+     */
     public Result<?> updateOrderStatus(Long orderId, Integer status) {
         orderMapper.updateStatus(orderId, status);
         return Result.success("更新成功");

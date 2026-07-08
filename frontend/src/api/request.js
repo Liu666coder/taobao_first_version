@@ -1,3 +1,7 @@
+/**
+ * axios 请求封装模块
+ * 创建统一的请求实例，配置请求/响应拦截器，处理 token 认证和错误提示
+ */
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import router from '@/router'

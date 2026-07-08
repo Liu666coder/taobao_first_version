@@ -18,7 +18,6 @@
           <span class="title-icon">🔥</span>
           <h2>{{ currentCategory ? '分类商品' : '热门商品' }}</h2>
         </div>
-        <el-link type="primary" :underline="false">查看更多 ></el-link>
       </div>
 
       <div v-if="loading" class="loading">
@@ -57,6 +56,11 @@
 </template>
 
 <script setup>
+/**
+ * Home - 商城首页
+ * 展示轮播图和商品列表，支持按分类筛选和关键词搜索，
+ * 监听路由变化自动刷新商品数据
+ */
 import { ref, onMounted, inject, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getProducts } from '@/api/product'

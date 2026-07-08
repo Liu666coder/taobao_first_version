@@ -1,3 +1,7 @@
+/**
+ * 前台购物车相关 API
+ * 提供购物车的增删改查及清空操作接口
+ */
 import request from './request'
 
 // 获取购物车列表

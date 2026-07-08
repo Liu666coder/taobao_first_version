@@ -10,9 +10,16 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 登录拦截器,身份验证
+ * 负责JWT Token验证、用户身份解析和基于角色的接口访问权限控制（系统管理员、营销经理、商品管理员、普通用户）
+ */
 @Component
 public class LoginInterceptor implements HandlerInterceptor {
 
+    /**
+     * 请求拦截：验证Token有效性，解析用户信息，根据URI和角色进行权限校验
+     */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // 获取token

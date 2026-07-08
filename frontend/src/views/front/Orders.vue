@@ -130,6 +130,11 @@
 </template>
 
 <script setup>
+/**
+ * Orders - 我的订单页面
+ * 支持订单列表展示、状态筛选（全部/待付款/已付款/待发货/已发货/已完成）、
+ * 从购物车结算创建订单、付款、取消、确认收货及查看详情等操作
+ */
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getOrderList, getOrderDetail, payOrder as payOrderApi, cancelOrder as cancelOrderApi, confirmReceive as confirmReceiveApi } from '@/api/order'

@@ -14,6 +14,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * 商品业务服务层
+ * 提供商品和分类的增删改查、上下架管理，以及后台商品搜索和分类关联校验
+ */
 @Service
 public class ProductService {
 
@@ -29,11 +33,17 @@ public class ProductService {
     @Autowired
     private OrderItemMapper orderItemMapper;
 
+    /**
+     * 前台商品搜索（支持关键字和分类筛选）
+     */
     public Result<?> getProductList(String keyword, Long categoryId) {
         List<Product> products = productMapper.search(keyword, categoryId);
         return Result.success(products);
     }
 
+    /**
+     * 获取商品详情
+     */
     public Result<?> getProductDetail(Long id) {
         Product product = productMapper.findById(id);
         if (product == null) {
@@ -42,16 +52,25 @@ public class ProductService {
         return Result.success(product);
     }
 
+    /**
+     * 获取前台展示的已启用分类列表
+     */
     public Result<?> getCategoryList() {
         List<Category> categories = categoryMapper.findEnabled();
         return Result.success(categories);
     }
 
+    /**
+     * 获取后台所有分类列表（含未启用的）
+     */
     public Result<?> getAllCategoryList() {
         List<Category> categories = categoryMapper.findAll();
         return Result.success(categories);
     }
 
+    /**
+     * 新增商品：DTO转实体，自动补充分类名称，设为上架状态
+     */
     public Result<?> addProduct(ProductDTO dto) {
         Product product = new Product();
         BeanUtils.copyProperties(dto, product);
@@ -69,6 +88,9 @@ public class ProductService {
         return Result.success("添加成功");
     }
 
+    /**
+     * 更新商品信息，若分类变更则同步更新分类名称
+     */
     public Result<?> updateProduct(Long id, ProductDTO dto) {
         Product product = new Product();
         BeanUtils.copyProperties(dto, product);
@@ -86,6 +108,9 @@ public class ProductService {
         return Result.success("更新成功");
     }
 
+    /**
+     * 删除商品：先清除购物车和订单明细中的关联数据，再删除商品本身
+     */
     public Result<?> deleteProduct(Long id) {
         // 先删除关联记录
         cartMapper.deleteByProductId(id);
@@ -95,6 +120,9 @@ public class ProductService {
         return Result.success("删除成功");
     }
 
+    /**
+     * 更新商品上下架状态
+     */
     public Result<?> updateProductStatus(Long id, Integer status) {
         Product product = new Product();
         product.setId(id);
@@ -103,25 +131,35 @@ public class ProductService {
         return Result.success("操作成功");
     }
 
-    // 后台管理搜索（包含下架商品）
+    /**
+     * 后台商品搜索（支持关键字、分类、上下架状态筛选）
+     */
     public Result<?> searchAdmin(String keyword, Long categoryId, Integer status) {
         List<Product> products = productMapper.searchAdmin(keyword, categoryId, status);
         return Result.success(products);
     }
 
-    // 分类管理
+    /**
+     * 新增分类，默认为启用状态
+     */
     public Result<?> addCategory(Category category) {
         category.setStatus(1);
         categoryMapper.insert(category);
         return Result.success("添加成功");
     }
 
+    /**
+     * 更新分类信息
+     */
     public Result<?> updateCategory(Long id, Category category) {
         category.setId(id);
         categoryMapper.update(category);
         return Result.success("更新成功");
     }
 
+    /**
+     * 删除分类：若分类下有商品则拒绝删除
+     */
     public Result<?> deleteCategory(Long id) {
         // 检查分类下是否有商品
         int count = productMapper.countByCategoryId(id);
@@ -132,6 +170,9 @@ public class ProductService {
         return Result.success("删除成功");
     }
 
+    /**
+     * 更新分类启用/禁用状态
+     */
     public Result<?> updateCategoryStatus(Long id, Integer status) {
         Category category = new Category();
         category.setId(id);

@@ -12,6 +12,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * 购物车业务服务层
+ * 处理购物车的添加（已存在则合并数量）、数量修改、删除、清空及数量统计
+ */
 @Service
 public class CartService {
 
@@ -24,11 +28,17 @@ public class CartService {
     @Autowired
     private UserMapper userMapper;
 
+    /**
+     * 查询用户的购物车列表
+     */
     public Result<?> getCartList(Long userId) {
         List<Cart> cartList = cartMapper.findByUserId(userId);
         return Result.success(cartList);
     }
 
+    /**
+     * 添加商品到购物车：已存在则累加数量，否则新增记录；同时校验库存
+     */
     public Result<?> addToCart(Long userId, Long productId, Integer quantity) {
         // 检查商品是否存在
         Product product = productMapper.findById(productId);
@@ -70,6 +80,9 @@ public class CartService {
         return Result.success("添加成功");
     }
 
+    /**
+     * 修改购物车商品数量，需校验库存是否充足
+     */
     public Result<?> updateQuantity(Long cartId, Integer quantity) {
         Cart cart = cartMapper.findById(cartId);
         if (cart == null) {
@@ -83,16 +96,25 @@ public class CartService {
         return Result.success("更新成功");
     }
 
+    /**
+     * 删除单个购物车项
+     */
     public Result<?> deleteCartItem(Long cartId) {
         cartMapper.deleteById(cartId);
         return Result.success("删除成功");
     }
 
+    /**
+     * 清空用户购物车
+     */
     public Result<?> clearCart(Long userId) {
         cartMapper.deleteByUserId(userId);
         return Result.success("清空成功");
     }
 
+    /**
+     * 统计用户购物车商品数量（用于导航栏角标显示）
+     */
     public Result<?> getCartCount(Long userId) {
         int count = cartMapper.countByUserId(userId);
         return Result.success(count);

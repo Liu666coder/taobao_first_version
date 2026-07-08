@@ -82,6 +82,11 @@
 </template>
 
 <script setup>
+/**
+ * Dashboard - 管理后台仪表盘
+ * 展示欢迎横幅、数据概览卡片（用户/商品/订单/分类数量）和快捷操作入口，
+ * 根据管理员角色动态显示对应的数据和操作项
+ */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAdminInfo, getAdminProducts, getAdminCategories, getUserList, getAdminOrders } from '@/api/admin'

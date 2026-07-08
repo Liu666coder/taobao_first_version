@@ -9,6 +9,10 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Spring MVC 全局配置
+ * 配置跨域策略、登录拦截器的拦截路径和放行路径、以及上传图片的静态资源映射
+ */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
@@ -18,6 +22,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Value("${upload.path:}")
     private String uploadPath;
 
+    /**
+     * 配置全局跨域：允许所有来源访问，支持GET/POST/PUT/DELETE
+     */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
@@ -28,6 +35,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .maxAge(3600);
     }
 
+    /**
+     * 注册登录拦截器：拦截所有/api/**请求，放行登录、注册、商品浏览和AI接口
+     */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loginInterceptor)
@@ -42,6 +52,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 );
     }
 
+    /**
+     * 静态资源映射：将/images/**路径映射到本地上传目录
+     */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // 映射上传的图片资源

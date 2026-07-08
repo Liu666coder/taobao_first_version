@@ -16,6 +16,10 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * 用户管理控制器
+ * 提供用户注册、登录、个人信息修改、头像上传等前台接口，以及后台用户查询、禁用、删除等管理接口
+ */
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
@@ -29,11 +33,17 @@ public class UserController {
     @Value("${upload.path:}")
     private String uploadPath;
 
+    /**
+     * 用户注册
+     */
     @PostMapping("/register")
     public Result<?> register(@RequestBody User user) {
         return userService.register(user);
     }
 
+    /**
+     * 用户登录
+     */
     @PostMapping("/login")
     public Result<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         String ip = getClientIp(httpRequest);
@@ -50,12 +60,18 @@ public class UserController {
         return result;
     }
 
+    /**
+     * 获取当前登录用户信息
+     */
     @GetMapping("/info")
     public Result<?> getUserInfo(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
         return userService.getUserInfo(userId);
     }
 
+    /**
+     * 更新用户个人信息
+     */
     @PutMapping("/update")
     public Result<?> updateUser(@RequestBody User user, HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
@@ -63,6 +79,9 @@ public class UserController {
         return userService.updateUser(user);
     }
 
+    /**
+     * 修改用户密码（需验证旧密码）
+     */
     @PutMapping("/password")
     public Result<?> updatePassword(@RequestBody Map<String, String> params, HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
@@ -118,22 +137,34 @@ public class UserController {
         }
     }
 
+    /**
+     * 后台获取用户列表（支持关键字搜索）
+     */
     @GetMapping("/list")
     public Result<?> getUserList(@RequestParam(required = false) String keyword) {
         return userService.getUserList(keyword);
     }
 
+    /**
+     * 后台管理员修改用户信息
+     */
     @PutMapping("/{id}")
     public Result<?> updateUserAdmin(@PathVariable Long id, @RequestBody User user) {
         user.setId(id);
         return userService.updateUser(user);
     }
 
+    /**
+     * 后台管理员启用/禁用用户
+     */
     @PutMapping("/{id}/status")
     public Result<?> updateUserStatus(@PathVariable Long id, @RequestParam Integer status) {
         return userService.updateUserStatus(id, status);
     }
 
+    /**
+     * 后台管理员删除用户
+     */
     @DeleteMapping("/{id}")
     public Result<?> deleteUser(@PathVariable Long id) {
         return userService.deleteUser(id);

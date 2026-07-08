@@ -17,14 +17,6 @@ mark {
   padding: 0 !important;
 }
 
-::highlight(search-text) {
-  background-color: transparent;
-}
-
-::highlight(search-text-exact) {
-  background-color: transparent;
-}
-
 html, body {
   width: 100%;
   height: 100%;

@@ -95,6 +95,11 @@
 </template>
 
 <script setup>
+/**
+ * Cart - 购物车页面
+ * 展示购物车商品列表，支持全选/单选、数量修改、删除、清空，
+ * 结算时将选中商品的 ID 传递到订单页面创建订单
+ */
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/store/cart'

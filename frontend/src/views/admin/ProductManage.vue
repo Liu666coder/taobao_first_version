@@ -90,8 +90,24 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <!-- ===================================================================== -->
+        <!-- 商品图片上传区域 -->
+        <!-- ===================================================================== -->
         <el-form-item label="商品图片">
           <div class="image-upload-area">
+            <!--
+              el-upload 图片上传组件
+              上传流程：选择文件 → 前端验证 → 自动上传 → 后端处理 → 返回URL → 显示预览
+
+              属性说明：
+              - action: 上传接口地址
+              - headers: 请求头，携带Token身份验证
+              - show-file-list: 是否显示文件列表
+              - before-upload: 上传前验证函数
+              - on-success: 上传成功回调
+              - on-error: 上传失败回调
+              - accept: 文件选择器接受的文件类型
+            -->
             <el-upload
               class="image-uploader"
               :action="uploadUrl"
@@ -102,6 +118,7 @@
               :on-error="handleUploadError"
               accept="image/*"
             >
+              <!-- 上传组件内容：有图片显示预览图，无图片显示上传占位符 -->
               <img v-if="form.image" :src="form.image" class="preview-image" @error="handleImageError" />
               <div v-else class="upload-placeholder">
                 <el-icon size="40"><Upload /></el-icon>
@@ -136,26 +153,34 @@
 </template>
 
 <script setup>
+// 导入Vue核心函数
 import { ref, reactive, computed, onMounted } from 'vue'
+// 导入API接口函数
 import { getAdminProducts, addProduct, updateProduct, deleteProduct, updateProductStatus, getAdminCategories, generateDescription } from '@/api/admin'
+// 导入Element Plus消息提示组件
 import { ElMessage, ElMessageBox } from 'element-plus'
 
-const loading = ref(false)
-const submitLoading = ref(false)
-const aiLoading = ref(false)
-const products = ref([])
-const categories = ref([])
-const dialogVisible = ref(false)
-const isEdit = ref(false)
-const uploadUrl = '/api/upload/image'
+// ==================== 响应式变量 ====================
+const loading = ref(false)           // 表格加载状态
+const submitLoading = ref(false)     // 提交按钮加载状态
+const aiLoading = ref(false)         // AI生成加载状态
+const products = ref([])             // 商品列表数据（从后端获取）
+const categories = ref([])           // 分类列表数据（从后端获取）
+const dialogVisible = ref(false)     // 对话框显示/隐藏
+const isEdit = ref(false)            // 当前是添加(false)还是编辑(true)模式
 
+// ==================== 图片上传配置 ====================
+const uploadUrl = '/api/upload/image'  // 上传接口地址
+
+// 上传请求头：携带管理员Token进行身份验证
 const uploadHeaders = computed(() => ({
   Authorization: `Bearer ${localStorage.getItem('adminToken') || ''}`
 }))
 
+// 上传前验证：检查文件类型和大小
 const beforeUpload = (file) => {
-  const isImage = file.type.startsWith('image/')
-  const isLt2M = file.size / 1024 / 1024 < 2
+  const isImage = file.type.startsWith('image/')  // 是否是图片
+  const isLt2M = file.size / 1024 / 1024 < 2      // 是否小于2MB
 
   if (!isImage) {
     ElMessage.error('只能上传图片文件!')
@@ -168,41 +193,47 @@ const beforeUpload = (file) => {
   return true
 }
 
+// 上传成功回调：把返回的图片URL存入表单
 const handleUploadSuccess = (response) => {
   if (response.code === 200) {
-    // 添加时间戳防止浏览器缓存
-    const imgUrl = response.data + '?t=' + Date.now()
-    Object.assign(form, { image: imgUrl })
+    const imgUrl = response.data + '?t=' + Date.now()  // 添加时间戳防止缓存
+    Object.assign(form, { image: imgUrl })  // 更新表单中的图片字段
     ElMessage.success('图片上传成功')
   } else {
     ElMessage.error(response.message || '上传失败')
   }
 }
 
+// 上传失败回调
 const handleUploadError = () => {
   ElMessage.error('图片上传失败')
 }
 
+// 图片加载失败时的处理
 const handleImageError = (e) => {
-  // 图片加载失败时的处理
   console.warn('图片加载失败:', e.target.src)
 }
-const formRef = ref(null)
 
-const searchKeyword = ref('')
-const searchCategoryId = ref(null)
-const searchStatus = ref(null)
+// ==================== 表单相关 ====================
+const formRef = ref(null)  // 表单引用，用于验证
 
+// 搜索条件
+const searchKeyword = ref('')        // 搜索关键词
+const searchCategoryId = ref(null)   // 搜索分类ID
+const searchStatus = ref(null)       // 搜索状态
+
+// 表单数据（添加/编辑商品时使用）
 const form = reactive({
-  id: null,
-  name: '',
-  categoryId: null,
-  price: 0,
-  stock: 0,
-  image: '',
-  description: ''
+  id: null,           // 商品ID（编辑时有值）
+  name: '',           // 商品名称
+  categoryId: null,   // 分类ID
+  price: 0,           // 价格
+  stock: 0,           // 库存
+  image: '',          // 图片URL
+  description: ''     // 商品描述
 })
 
+// 表单验证规则
 const rules = {
   name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
   categoryId: [{ required: true, message: '请选择分类', trigger: 'change' }],
@@ -210,8 +241,10 @@ const rules = {
   stock: [{ required: true, message: '请输入库存', trigger: 'blur' }]
 }
 
+// ==================== 数据获取 ====================
+// 获取商品列表（支持搜索筛选）
 const fetchProducts = async () => {
-  loading.value = true
+  loading.value = true  // 显示加载动画
   try {
     const res = await getAdminProducts({
       keyword: searchKeyword.value,
@@ -219,125 +252,143 @@ const fetchProducts = async () => {
       status: searchStatus.value
     })
     if (res.code === 200) {
-      products.value = res.data
+      products.value = res.data  // 更新商品列表
     }
   } catch (e) {
     console.error(e)
   } finally {
-    loading.value = false
+    loading.value = false  // 隐藏加载动画
   }
 }
 
+// 获取分类列表（用于下拉框选项）
 const fetchCategories = async () => {
   try {
     const res = await getAdminCategories()
     if (res.code === 200) {
-      categories.value = res.data
+      categories.value = res.data  // 更新分类列表
     }
   } catch (e) {
     console.error(e)
   }
 }
 
+// 重置搜索条件
 const resetSearch = () => {
   searchKeyword.value = ''
   searchCategoryId.value = null
   searchStatus.value = null
-  fetchProducts()
+  fetchProducts()  // 重新获取数据
 }
 
+// ==================== 操作处理 ====================
+// 点击"添加商品"按钮：打开对话框，重置表单
 const handleAdd = () => {
   isEdit.value = false
   Object.assign(form, { id: null, name: '', categoryId: null, price: 0, stock: 0, image: '', description: '' })
   dialogVisible.value = true
 }
 
+// 点击"编辑"按钮：打开对话框，填入当前行数据
 const handleEdit = (row) => {
   isEdit.value = true
-  Object.assign(form, row)
+  Object.assign(form, row)  // 把商品数据填入表单
   dialogVisible.value = true
 }
 
+// 上下架切换：0=下架，1=上架
 const handleStatus = async (row) => {
-  const newStatus = row.status === 1 ? 0 : 1
+  const newStatus = row.status === 1 ? 0 : 1  // 切换状态
   try {
     const res = await updateProductStatus(row.id, newStatus)
     if (res.code === 200) {
       ElMessage.success('操作成功')
-      fetchProducts()
+      fetchProducts()  // 刷新列表
     }
   } catch (e) {
     ElMessage.error('操作失败')
   }
 }
 
+// 删除商品：弹出确认框，确认后删除
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm(`确定删除商品"${row.name}"吗？`, '提示', { type: 'warning' })
     const res = await deleteProduct(row.id)
     if (res.code === 200) {
       ElMessage.success('删除成功')
-      fetchProducts()
+      fetchProducts()  // 刷新列表
     }
   } catch (e) {
-    if (e !== 'cancel') ElMessage.error('删除失败')
+    if (e !== 'cancel') ElMessage.error('删除失败')  // 取消不算错误
   }
 }
 
+// 提交表单（添加或编辑）
 const handleSubmit = async () => {
+  // 1. 验证表单
   const valid = await formRef.value.validate().catch(() => false)
-  if (!valid) return
+  if (!valid) return  // 验证失败则不提交
 
-  submitLoading.value = true
+  submitLoading.value = true  // 显示加载动画
   try {
+    // 2. 准备数据（删除不需要的字段）
     const data = { ...form }
-    delete data.id
-    delete data.categoryName
+    delete data.id            // 添加时不需要id
+    delete data.categoryName  // 不需要分类名称
 
+    // 3. 调用API（根据模式调用不同接口）
     let res
     if (isEdit.value) {
-      res = await updateProduct(form.id, data)
+      res = await updateProduct(form.id, data)  // 编辑：PUT /api/admin/products/:id
     } else {
-      res = await addProduct(data)
+      res = await addProduct(data)  // 添加：POST /api/admin/products
     }
 
+    // 4. 处理结果
     if (res.code === 200) {
       ElMessage.success(isEdit.value ? '修改成功' : '添加成功')
-      dialogVisible.value = false
-      fetchProducts()
+      dialogVisible.value = false  // 关闭对话框
+      fetchProducts()  // 刷新列表
     }
   } catch (e) {
     ElMessage.error('操作失败')
   } finally {
-    submitLoading.value = false
+    submitLoading.value = false  // 隐藏加载动画
   }
 }
 
+// ==================== 页面初始化 ====================
 onMounted(() => {
-  fetchProducts()
-  fetchCategories()
+  fetchProducts()    // 页面加载时获取商品列表
+  fetchCategories()  // 页面加载时获取分类列表
 })
 
-// AI一键生成商品简介
+// ==================== AI生成商品简介 ====================
 const handleAiGenerate = async () => {
+  // 1. 验证：必须先输入商品名称
   if (!form.name) {
     ElMessage.warning('请先输入商品名称')
     return
   }
-  aiLoading.value = true
+
+  aiLoading.value = true  // 2. 显示加载动画
   try {
-    // 找到分类名称
+    // 3. 查找分类名称（从分类列表中根据categoryId找到name）
     const cat = categories.value.find(c => c.id === form.categoryId)
     const categoryName = cat ? cat.name : '未分类'
 
+    // 4. 调用后端AI接口
     const res = await generateDescription({
-      productName: form.name,
-      category: categoryName,
-      price: form.price
+      productName: form.name,       // 商品名称
+      category: categoryName,      // 分类名称
+      price: form.price            // 价格
     })
+
+    // 5. 处理结果
     if (res.code == 200 && res.data) {
-      const desc = String(res.data).trim()
-      form.description = desc
+      const desc = String(res.data).trim()  // 转字符串并去空格
+      form.description = desc  // 把AI文案填入描述输入框
       ElMessage.success('AI简介生成成功')
     } else {
       ElMessage.error('生成失败，请重试')
@@ -346,7 +397,7 @@ const handleAiGenerate = async () => {
     console.error('AI生成失败:', e)
     ElMessage.error('AI服务调用失败')
   } finally {
-    aiLoading.value = false
+    aiLoading.value = false  // 6. 隐藏加载动画
   }
 }
 </script>

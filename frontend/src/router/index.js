@@ -1,3 +1,7 @@
+/**
+ * 路由配置模块
+ * 定义前台（商城）和后台（管理）的所有路由，并通过全局守卫实现登录拦截
+ */
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
@@ -132,7 +136,7 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫
+// 全局路由守卫：设置页面标题，未登录时拦截并跳转到登录页
 router.beforeEach((to, from, next) => {
   document.title = to.meta.title ? `${to.meta.title} - 校园淘宝` : '校园淘宝商城'
 

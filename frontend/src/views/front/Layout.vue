@@ -128,6 +128,11 @@
 </template>
 
 <script setup>
+/**
+ * Layout - 前台商城整体布局
+ * 包含顶部工具栏、导航栏、搜索框、分类导航和页脚，
+ * 管理用户登录状态、购物车角标、待处理订单数等全局信息
+ */
 import { ref, onMounted, provide, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
