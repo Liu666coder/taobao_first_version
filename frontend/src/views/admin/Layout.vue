@@ -45,6 +45,11 @@
           <span>操作日志</span>
         </el-menu-item>
 
+        <el-menu-item index="/admin/security" v-if="isAdmin">
+          <el-icon><Shield /></el-icon>
+          <span>安全扫描</span>
+        </el-menu-item>
+
         <el-menu-item index="/admin/orders" class="order-menu-item">
           <el-icon><Document /></el-icon>
           <span>订单管理</span>

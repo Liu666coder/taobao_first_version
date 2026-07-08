@@ -2,6 +2,7 @@ package com.campus.campusTaobaoMall.controller;
 
 import com.campus.campusTaobaoMall.dto.LoginRequest;
 import com.campus.campusTaobaoMall.entity.User;
+import com.campus.campusTaobaoMall.service.LoginLogService;
 import com.campus.campusTaobaoMall.service.UserService;
 import com.campus.campusTaobaoMall.vo.Result;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +23,9 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private LoginLogService loginLogService;
+
     @Value("${upload.path:}")
     private String uploadPath;
 
@@ -31,8 +35,19 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public Result<?> login(@RequestBody LoginRequest request) {
-        return userService.login(request);
+    public Result<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        String ip = getClientIp(httpRequest);
+        String ua = httpRequest.getHeader("User-Agent");
+        String browser = parseBrowser(ua);
+        String os = parseOs(ua);
+
+        Result<?> result = userService.login(request);
+        if (result.getCode() == 200) {
+            loginLogService.log("USER", request.getUsername(), ip, browser, os, 1, "登录成功");
+        } else {
+            loginLogService.log("USER", request.getUsername(), ip, browser, os, 0, result.getMessage());
+        }
+        return result;
     }
 
     @GetMapping("/info")
@@ -122,5 +137,39 @@ public class UserController {
     @DeleteMapping("/{id}")
     public Result<?> deleteUser(@PathVariable Long id) {
         return userService.deleteUser(id);
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        if (ip != null && ip.contains(",")) {
+            ip = ip.substring(0, ip.indexOf(",")).trim();
+        }
+        return ip;
+    }
+
+    private String parseBrowser(String ua) {
+        if (ua == null) return "Unknown";
+        if (ua.contains("Edg/")) return "Edge";
+        if (ua.contains("Chrome/")) return "Chrome";
+        if (ua.contains("Firefox/")) return "Firefox";
+        if (ua.contains("Safari/") && !ua.contains("Chrome")) return "Safari";
+        return "Other";
+    }
+
+    private String parseOs(String ua) {
+        if (ua == null) return "Unknown";
+        if (ua.contains("Windows NT 10")) return "Windows 10/11";
+        if (ua.contains("Windows")) return "Windows";
+        if (ua.contains("Mac OS X")) return "macOS";
+        if (ua.contains("Linux")) return "Linux";
+        if (ua.contains("Android")) return "Android";
+        if (ua.contains("iPhone") || ua.contains("iPad")) return "iOS";
+        return "Other";
     }
 }

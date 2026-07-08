@@ -166,3 +166,44 @@ export function cleanOldLogs(days) {
   return request.delete('/admin/logs/clean', { params: { days } })
 }
 
+// ========== 登录安全扫描 ==========
+// 获取登录日志列表
+export function getLoginLogs(params) {
+  return request.get('/admin/security/logs', { params })
+}
+
+// 获取最近登录日志
+export function getRecentLoginLogs(params) {
+  return request.get('/admin/security/logs/recent', { params })
+}
+
+// 获取周登录统计
+export function getWeekLoginSummary() {
+  return request.get('/admin/security/stats/week')
+}
+
+// 获取每日登录统计
+export function getDailyLoginStats() {
+  return request.get('/admin/security/stats/daily')
+}
+
+// 扫描频繁失败登录
+export function scanFailedLogins(params) {
+  return request.post('/admin/security/scan/failed', null, { params })
+}
+
+// 扫描可疑IP
+export function scanSuspiciousIps(params) {
+  return request.post('/admin/security/scan/ips', null, { params })
+}
+
+// 综合安全扫描
+export function fullSecurityScan() {
+  return request.post('/admin/security/scan')
+}
+
+// 清理旧登录日志
+export function cleanOldLoginLogs(days) {
+  return request.delete('/admin/security/clean', { params: { days } })
+}
+

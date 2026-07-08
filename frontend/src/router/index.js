@@ -116,6 +116,12 @@ const routes = [
         name: 'AdminLogs',
         component: () => import('@/views/admin/AdminLogManage.vue'),
         meta: { title: '操作日志' }
+      },
+      {
+        path: 'security',
+        name: 'SecurityScan',
+        component: () => import('@/views/admin/SecurityScan.vue'),
+        meta: { title: '安全扫描' }
       }
     ]
   }

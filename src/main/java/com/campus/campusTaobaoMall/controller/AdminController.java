@@ -4,6 +4,7 @@ import com.campus.campusTaobaoMall.dto.LoginRequest;
 import com.campus.campusTaobaoMall.entity.Admin;
 import com.campus.campusTaobaoMall.service.AdminLogService;
 import com.campus.campusTaobaoMall.service.AdminService;
+import com.campus.campusTaobaoMall.service.LoginLogService;
 import com.campus.campusTaobaoMall.vo.Result;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,15 +27,25 @@ public class AdminController {
     @Autowired
     private AdminLogService adminLogService;
 
+    @Autowired
+    private LoginLogService loginLogService;
+
     @Value("${upload.path:}")
     private String uploadPath;
 
     @PostMapping("/login")
     public Result<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        String ip = getClientIp(httpRequest);
+        String ua = httpRequest.getHeader("User-Agent");
+        String browser = parseBrowser(ua);
+        String os = parseOs(ua);
+
         Result<?> result = adminService.login(request);
         if (result.getCode() == 200) {
-            String ip = getClientIp(httpRequest);
             adminLogService.log(null, request.getUsername(), "登录系统", "管理员账号", request.getUsername() + " 登录成功", ip);
+            loginLogService.log("ADMIN", request.getUsername(), ip, browser, os, 1, "登录成功");
+        } else {
+            loginLogService.log("ADMIN", request.getUsername(), ip, browser, os, 0, result.getMessage());
         }
         return result;
     }
@@ -187,5 +198,34 @@ public class AdminController {
             ip = ip.substring(0, ip.indexOf(",")).trim();
         }
         return ip;
+    }
+
+    /**
+     * 解析浏览器类型
+     */
+    private String parseBrowser(String ua) {
+        if (ua == null) return "Unknown";
+        if (ua.contains("Edg/")) return "Edge";
+        if (ua.contains("Chrome/")) return "Chrome";
+        if (ua.contains("Firefox/")) return "Firefox";
+        if (ua.contains("Safari/") && !ua.contains("Chrome")) return "Safari";
+        if (ua.contains("MSIE") || ua.contains("Trident/")) return "IE";
+        return "Other";
+    }
+
+    /**
+     * 解析操作系统
+     */
+    private String parseOs(String ua) {
+        if (ua == null) return "Unknown";
+        if (ua.contains("Windows NT 10")) return "Windows 10/11";
+        if (ua.contains("Windows NT 6.3")) return "Windows 8.1";
+        if (ua.contains("Windows NT 6.1")) return "Windows 7";
+        if (ua.contains("Windows")) return "Windows";
+        if (ua.contains("Mac OS X")) return "macOS";
+        if (ua.contains("Linux")) return "Linux";
+        if (ua.contains("Android")) return "Android";
+        if (ua.contains("iPhone") || ua.contains("iPad")) return "iOS";
+        return "Other";
     }
 }
