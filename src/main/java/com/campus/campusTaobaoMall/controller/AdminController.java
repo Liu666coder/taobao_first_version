@@ -2,6 +2,7 @@ package com.campus.campusTaobaoMall.controller;
 
 import com.campus.campusTaobaoMall.dto.LoginRequest;
 import com.campus.campusTaobaoMall.entity.Admin;
+import com.campus.campusTaobaoMall.service.AdminLogService;
 import com.campus.campusTaobaoMall.service.AdminService;
 import com.campus.campusTaobaoMall.vo.Result;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,12 +23,20 @@ public class AdminController {
     @Autowired
     private AdminService adminService;
 
+    @Autowired
+    private AdminLogService adminLogService;
+
     @Value("${upload.path:}")
     private String uploadPath;
 
     @PostMapping("/login")
-    public Result<?> login(@RequestBody LoginRequest request) {
-        return adminService.login(request);
+    public Result<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        Result<?> result = adminService.login(request);
+        if (result.getCode() == 200) {
+            String ip = getClientIp(httpRequest);
+            adminLogService.log(null, request.getUsername(), "登录系统", "管理员账号", request.getUsername() + " 登录成功", ip);
+        }
+        return result;
     }
 
     @GetMapping("/info")
@@ -44,30 +53,66 @@ public class AdminController {
     }
 
     @PostMapping
-    public Result<?> addAdmin(@RequestBody Admin admin) {
-        return adminService.addAdmin(admin);
+    public Result<?> addAdmin(@RequestBody Admin admin, HttpServletRequest httpRequest) {
+        Result<?> result = adminService.addAdmin(admin);
+        if (result.getCode() == 200) {
+            Long adminId = (Long) httpRequest.getAttribute("userId");
+            String adminName = (String) httpRequest.getAttribute("username");
+            String ip = getClientIp(httpRequest);
+            adminLogService.log(adminId, adminName, "添加管理员", "管理员账号", "添加管理员「" + admin.getUsername() + "」，角色：" + admin.getRole(), ip);
+        }
+        return result;
     }
 
     @PutMapping("/{id}")
-    public Result<?> updateAdmin(@PathVariable Long id, @RequestBody Admin admin) {
+    public Result<?> updateAdmin(@PathVariable Long id, @RequestBody Admin admin, HttpServletRequest httpRequest) {
         admin.setId(id);
-        return adminService.updateAdmin(admin);
+        Result<?> result = adminService.updateAdmin(admin);
+        if (result.getCode() == 200) {
+            Long adminId = (Long) httpRequest.getAttribute("userId");
+            String adminName = (String) httpRequest.getAttribute("username");
+            String ip = getClientIp(httpRequest);
+            adminLogService.log(adminId, adminName, "修改管理员", "管理员ID:" + id, "修改管理员信息", ip);
+        }
+        return result;
     }
 
     @DeleteMapping("/{id}")
-    public Result<?> deleteAdmin(@PathVariable Long id) {
-        return adminService.deleteAdmin(id);
+    public Result<?> deleteAdmin(@PathVariable Long id, HttpServletRequest httpRequest) {
+        Result<?> result = adminService.deleteAdmin(id);
+        if (result.getCode() == 200) {
+            Long adminId = (Long) httpRequest.getAttribute("userId");
+            String adminName = (String) httpRequest.getAttribute("username");
+            String ip = getClientIp(httpRequest);
+            adminLogService.log(adminId, adminName, "删除管理员", "管理员ID:" + id, "删除管理员账号", ip);
+        }
+        return result;
     }
 
     @PutMapping("/{id}/status")
-    public Result<?> updateAdminStatus(@PathVariable Long id, @RequestParam Integer status) {
-        return adminService.updateAdminStatus(id, status);
+    public Result<?> updateAdminStatus(@PathVariable Long id, @RequestParam Integer status, HttpServletRequest httpRequest) {
+        Result<?> result = adminService.updateAdminStatus(id, status);
+        if (result.getCode() == 200) {
+            Long adminId = (Long) httpRequest.getAttribute("userId");
+            String adminName = (String) httpRequest.getAttribute("username");
+            String ip = getClientIp(httpRequest);
+            String statusText = status == 1 ? "启用" : "禁用";
+            adminLogService.log(adminId, adminName, statusText + "管理员", "管理员ID:" + id, statusText + "管理员账号", ip);
+        }
+        return result;
     }
 
     @PutMapping("/{id}/password")
-    public Result<?> resetPassword(@PathVariable Long id, @RequestBody Map<String, String> params) {
+    public Result<?> resetPassword(@PathVariable Long id, @RequestBody Map<String, String> params, HttpServletRequest httpRequest) {
         String newPassword = params.get("newPassword");
-        return adminService.updateAdminPassword(id, newPassword);
+        Result<?> result = adminService.updateAdminPassword(id, newPassword);
+        if (result.getCode() == 200) {
+            Long adminId = (Long) httpRequest.getAttribute("userId");
+            String adminName = (String) httpRequest.getAttribute("username");
+            String ip = getClientIp(httpRequest);
+            adminLogService.log(adminId, adminName, "重置密码", "管理员ID:" + id, "重置管理员密码", ip);
+        }
+        return result;
     }
 
     // ========== 个人资料管理 ==========
@@ -124,5 +169,23 @@ public class AdminController {
         String oldPassword = params.get("oldPassword");
         String newPassword = params.get("newPassword");
         return adminService.updateMyPassword(adminId, oldPassword, newPassword);
+    }
+
+    /**
+     * 获取客户端真实IP
+     */
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // 多个代理时取第一个
+        if (ip != null && ip.contains(",")) {
+            ip = ip.substring(0, ip.indexOf(",")).trim();
+        }
+        return ip;
     }
 }

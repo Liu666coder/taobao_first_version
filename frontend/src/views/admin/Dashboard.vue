@@ -88,7 +88,8 @@ const allActions = [
   { label: '订单管理', icon: 'Document', path: '/admin/orders', perm: 'all' },
   { label: '用户管理', icon: 'User', path: '/admin/users', perm: 'user' },
   { label: '分类管理', icon: 'Grid', path: '/admin/categories', perm: 'product' },
-  { label: '管理员管理', icon: 'UserFilled', path: '/admin/admins', perm: 'admin' }
+  { label: '管理员管理', icon: 'UserFilled', path: '/admin/admins', perm: 'admin' },
+  { label: '操作日志', icon: 'Notebook', path: '/admin/logs', perm: 'admin' }
 ]
 
 const hasProductPermission = computed(() => {

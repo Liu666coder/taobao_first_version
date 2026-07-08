@@ -40,6 +40,11 @@
           <span>管理员管理</span>
         </el-menu-item>
 
+        <el-menu-item index="/admin/logs" v-if="isAdmin">
+          <el-icon><Notebook /></el-icon>
+          <span>操作日志</span>
+        </el-menu-item>
+
         <el-menu-item index="/admin/orders" class="order-menu-item">
           <el-icon><Document /></el-icon>
           <span>订单管理</span>

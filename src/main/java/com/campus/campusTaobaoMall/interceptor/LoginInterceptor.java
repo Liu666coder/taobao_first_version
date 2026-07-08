@@ -57,8 +57,10 @@ public class LoginInterceptor implements HandlerInterceptor {
             }
 
             // 系统管理员专属接口：管理员管理（增删改、状态、密码）
-            if (uri.matches("/api/admin/(\\d+).*") || uri.equals("/api/admin/list")
-                    || (uri.equals("/api/admin") && "POST".equals(method))) {
+            // 排除操作日志接口（所有管理员可访问）
+            if ((uri.matches("/api/admin/(\\d+).*") || uri.equals("/api/admin/list")
+                    || (uri.equals("/api/admin") && "POST".equals(method)))
+                    && !uri.startsWith("/api/admin/logs")) {
                 if (!"SYSTEM_ADMIN".equals(role)) {
                     sendForbidden(response, "需要系统管理员权限");
                     return false;

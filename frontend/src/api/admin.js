@@ -135,3 +135,34 @@ export function generateDescription(data) {
   return request.post('/admin/ai/generate-description', data)
 }
 
+// ========== 操作日志 ==========
+// 获取操作日志列表
+export function getAdminLogs(params) {
+  return request.get('/admin/logs', { params })
+}
+
+// 获取最近操作日志
+export function getRecentLogs(params) {
+  return request.get('/admin/logs/recent', { params })
+}
+
+// 获取操作类型统计
+export function getActionStats() {
+  return request.get('/admin/logs/stats/actions')
+}
+
+// 获取管理员操作排行
+export function getAdminLogStats() {
+  return request.get('/admin/logs/stats/admins')
+}
+
+// 扫描异常操作
+export function scanAbnormalOperations() {
+  return request.post('/admin/logs/scan')
+}
+
+// 清理旧日志
+export function cleanOldLogs(days) {
+  return request.delete('/admin/logs/clean', { params: { days } })
+}
+

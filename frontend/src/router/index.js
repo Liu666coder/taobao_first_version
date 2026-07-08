@@ -110,6 +110,12 @@ const routes = [
         name: 'AdminProfile',
         component: () => import('@/views/admin/AdminProfile.vue'),
         meta: { title: '个人资料' }
+      },
+      {
+        path: 'logs',
+        name: 'AdminLogs',
+        component: () => import('@/views/admin/AdminLogManage.vue'),
+        meta: { title: '操作日志' }
       }
     ]
   }
