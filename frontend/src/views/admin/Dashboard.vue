@@ -61,6 +61,23 @@
         </div>
       </div>
     </div>
+
+    <!-- 系统信息 -->
+    <div class="system-info">
+      <div class="info-item">
+        <el-icon :size="14"><Clock /></el-icon>
+        <span>上次登录：{{ lastLogin }}</span>
+      </div>
+      <div class="info-item">
+        <el-icon :size="14"><Monitor /></el-icon>
+        <span>校园淘宝商城管理后台 v1.0</span>
+      </div>
+      <div class="info-item">
+        <el-icon :size="14"><Connection /></el-icon>
+        <span>系统运行正常</span>
+        <span class="status-dot"></span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -72,6 +89,7 @@ import { getAdminInfo, getAdminProducts, getAdminCategories, getUserList, getAdm
 const router = useRouter()
 const adminInfo = ref(null)
 const currentTime = ref('')
+const lastLogin = ref(localStorage.getItem('adminLastLogin') || '首次登录')
 let timer = null
 
 // 数据卡片
@@ -170,6 +188,10 @@ onMounted(() => {
   fetchStats()
   updateTime()
   timer = setInterval(updateTime, 1000)
+  // 记录本次登录时间
+  const now = new Date().toLocaleString('zh-CN')
+  localStorage.setItem('adminLastLogin', now)
+  lastLogin.value = now
 })
 
 onUnmounted(() => {
@@ -404,6 +426,36 @@ onUnmounted(() => {
       font-weight: 600;
     }
   }
+}
+
+/* ==================== 系统信息 ==================== */
+.system-info {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 24px;
+  padding: 16px 0;
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #999;
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      background: #67c23a;
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 /* ==================== 响应式 ==================== */

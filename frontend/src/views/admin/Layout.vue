@@ -76,6 +76,24 @@
         </div>
 
         <div class="header-right">
+          <!-- 全屏按钮 -->
+          <el-tooltip :content="isFullscreen ? '退出全屏' : '全屏显示'" placement="bottom">
+            <el-icon class="header-icon-btn" @click="toggleFullscreen">
+              <FullScreen v-if="!isFullscreen" />
+              <Aim v-else />
+            </el-icon>
+          </el-tooltip>
+
+          <!-- 通知铃铛 -->
+          <el-tooltip content="待发货订单" placement="bottom">
+            <div class="notify-bell" @click="$router.push('/admin/orders')">
+              <el-icon :size="18"><Bell /></el-icon>
+              <span v-if="pendingShipmentCount > 0" class="notify-badge">
+                {{ pendingShipmentCount > 99 ? '99+' : pendingShipmentCount }}
+              </span>
+            </div>
+          </el-tooltip>
+
           <el-tag :type="roleTagType" size="small" class="role-tag">{{ roleText }}</el-tag>
           <el-dropdown @command="handleCommand">
             <span class="admin-name">
@@ -117,9 +135,21 @@ const router = useRouter()
 const route = useRoute()
 
 const isCollapsed = ref(false)
+const isFullscreen = ref(false)
 const adminInfo = ref(null)
 const pendingShipmentCount = ref(0)
 let orderPollingTimer = null
+
+// 全屏切换
+const toggleFullscreen = () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {})
+    isFullscreen.value = true
+  } else {
+    document.exitFullscreen().catch(() => {})
+    isFullscreen.value = false
+  }
+}
 
 const roleMap = {
   'PRODUCT_MANAGER': { text: '商品专员', tag: '' },
@@ -338,6 +368,53 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.header-icon-btn {
+  font-size: 18px;
+  cursor: pointer;
+  color: #666;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #ff5722;
+    background: rgba(255, 87, 34, 0.06);
+  }
+}
+
+.notify-bell {
+  position: relative;
+  cursor: pointer;
+  color: #666;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    color: #ff5722;
+    background: rgba(255, 87, 34, 0.06);
+  }
+
+  .notify-badge {
+    position: absolute;
+    top: 0;
+    right: -2px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: #ff4d4f;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 16px;
+    text-align: center;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(255, 77, 79, 0.35);
+  }
 }
 
 .role-tag {
